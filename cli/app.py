@@ -205,9 +205,9 @@ def chat(
     show_banner()
 
     # Resolve workspace
-    ws = workspace or os.environ.get("ROOBIE_WORKSPACE", os.getcwd())
+    ws = workspace or os.getcwd()
     ws = os.path.abspath(ws)
-    mdl = model or os.environ.get("ROOBIE_MODEL", "qwen2.5-coder:3b")
+    mdl = model or os.environ.get("ROOBIE_MODEL", "deepseek-ai/deepseek-coder-6.7b-instruct")
     host = ollama_host or os.environ.get("ROOBIE_OLLAMA_HOST", "http://localhost:11434")
 
     console.print(f"\n  📁 Workspace: [cyan]{ws}[/cyan]")
@@ -583,9 +583,9 @@ def run(
     model: Optional[str] = typer.Option(None, "--model", "-m", help="Ollama model"),
 ):
     """🚀 Run a one-shot task (non-interactive). E.g.: roobie run 'Create a landing page'"""
-    ws = workspace or os.environ.get("ROOBIE_WORKSPACE", os.getcwd())
+    ws = workspace or os.getcwd()
     ws = os.path.abspath(ws)
-    mdl = model or os.environ.get("ROOBIE_MODEL", "qwen2.5-coder:3b")
+    mdl = model or os.environ.get("ROOBIE_MODEL", "deepseek-ai/deepseek-coder-6.7b-instruct")
     host = os.environ.get("ROOBIE_OLLAMA_HOST", "http://localhost:11434")
 
     console.print(f"\n  📁 [cyan]{ws}[/cyan]  🧠 [cyan]{mdl}[/cyan]\n")

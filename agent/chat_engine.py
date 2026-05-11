@@ -37,10 +37,11 @@ RULES:
 1. ALWAYS wrap tool calls in <tool_call> tags. This is mandatory.
 2. You can make multiple tool calls in one response.
 3. Write complete file contents, never use placeholders.
-4. Be autonomous - just do the work without asking permission.
+4. Be autonomous - just do the work without asking permission. YOU MUST USE TOOLS to create files. DO NOT just write markdown code blocks for the user to copy-paste.
 5. Use python3 (not python) for Python commands. Use npx for Node.js scaffolding.
 6. If a command fails, try a different approach - do NOT retry the same command.
-7. When done, give a final summary without any tool calls.
+7. YOU MUST execute commands using `run_command` yourself. Do not tell the user to run them.
+8. When done, give a final summary without any tool calls.
 
 EXAMPLE:
 User: Create a hello world page
@@ -158,23 +159,29 @@ class ChatEngine:
         return full_response
 
     def _generate(self, messages: List[Dict]) -> str:
-        """Generate a response from Ollama."""
+        """Generate a response from AirLLM or Ollama."""
         # Build messages with system prompt
         full_messages = [
             {"role": "system", "content": SYSTEM_PROMPT}
         ] + messages[-20:]  # Keep last 20 messages for context window
 
+        if "/" in self.model or "deepseek-ai" in self.model:
+            return self._airllm_generate(full_messages)
+        else:
+            return self._ollama_generate(full_messages)
+
+    def _ollama_generate(self, full_messages: List[Dict]) -> str:
+        """Generate via Ollama HTTP API."""
         payload = {
             "model": self.model,
             "messages": full_messages,
             "stream": False,
             "options": {
-                "temperature": 0.3,  # Lower temp for more consistent tool use
+                "temperature": 0.3,
                 "num_predict": 4096,
                 "num_ctx": 8192,
             }
         }
-
         try:
             r = requests.post(
                 f"{self.ollama_host}/api/chat",
@@ -187,6 +194,70 @@ class ChatEngine:
                 return ""
         except Exception as e:
             self._emit("error", {"message": f"Model error: {e}"})
+            return ""
+
+    def _airllm_generate(self, full_messages: List[Dict]) -> str:
+        """Generate text using AirLLM disk-offloaded inference."""
+        if not hasattr(self, "_airllm_model"):
+            self._emit("assistant_message", {"content": f"Loading AirLLM model {self.model} (may take a minute)...\\n", "partial": True})
+            try:
+                from airllm import AutoModel
+                from transformers import AutoTokenizer
+                self._airllm_model = AutoModel.from_pretrained(
+                    self.model,
+                    compression="4bit",
+                    profiling_mode=True
+                )
+                self._airllm_tokenizer = AutoTokenizer.from_pretrained(self.model)
+                self._emit("assistant_message", {"content": "AirLLM model loaded.\\n", "partial": True})
+            except ImportError:
+                self._emit("error", {"message": "AirLLM not installed. Install with: pip install airllm"})
+                return ""
+            except Exception as e:
+                self._emit("error", {"message": f"AirLLM loading error: {e}"})
+                return ""
+
+        # Build prompt from messages using chat template if available
+        try:
+            prompt = self._airllm_tokenizer.apply_chat_template(
+                full_messages, 
+                tokenize=False, 
+                add_generation_prompt=True
+            )
+        except Exception:
+            # Fallback for tokenizers without chat template
+            prompt = ""
+            for m in full_messages:
+                role = m["role"]
+                content = m["content"]
+                if role == "system":
+                    prompt += f"{content}\\n\\n"
+                elif role == "user":
+                    prompt += f"### Instruction:\\n{content}\\n\\n"
+                elif role == "assistant":
+                    prompt += f"### Response:\\n{content}\\n\\n"
+            prompt += "### Response:\\n"
+
+        try:
+            input_ids = self._airllm_tokenizer(
+                prompt,
+                return_tensors="pt",
+                truncation=True,
+                max_length=4096
+            ).input_ids
+            
+            generation_output = self._airllm_model.generate(
+                input_ids,
+                max_new_tokens=1024,
+                use_cache=True,
+                return_dict_in_generate=True,
+            )
+            
+            output_ids = generation_output.sequences[0][input_ids.shape[1]:]
+            response = self._airllm_tokenizer.decode(output_ids, skip_special_tokens=True)
+            return response.strip()
+        except Exception as e:
+            self._emit("error", {"message": f"AirLLM generation error: {e}"})
             return ""
 
     def _extract_tool_calls(self, response: str) -> List[Dict]:
