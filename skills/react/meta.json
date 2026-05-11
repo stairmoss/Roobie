@@ -1,0 +1,9 @@
+{
+  "name": "React",
+  "description": "React component patterns, hooks, state management, performance optimization",
+  "tags": [
+    "react",
+    "components",
+    "hooks"
+  ]
+}

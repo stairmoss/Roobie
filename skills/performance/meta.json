@@ -1,0 +1,9 @@
+{
+  "name": "Performance",
+  "description": "Web performance optimization: bundle size, lazy loading, image optimization, Core Web Vitals",
+  "tags": [
+    "performance",
+    "speed",
+    "optimization"
+  ]
+}

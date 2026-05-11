@@ -1,0 +1,9 @@
+{
+  "name": "Backend Development",
+  "description": "FastAPI backend patterns, SQLite/PostgreSQL, authentication, API design, validation",
+  "tags": [
+    "backend",
+    "api",
+    "database"
+  ]
+}

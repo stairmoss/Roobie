@@ -1,0 +1,9 @@
+{
+  "name": "E-Commerce",
+  "description": "E-commerce patterns: product grids, cart, checkout, filters, search, payment integration",
+  "tags": [
+    "ecommerce",
+    "shop",
+    "products"
+  ]
+}

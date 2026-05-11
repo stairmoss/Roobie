@@ -1,0 +1,9 @@
+{
+  "name": "Blog",
+  "description": "Blog patterns: article layouts, MDX, syntax highlighting, table of contents, RSS feeds",
+  "tags": [
+    "blog",
+    "content",
+    "articles"
+  ]
+}

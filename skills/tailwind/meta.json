@@ -1,0 +1,9 @@
+{
+  "name": "TailwindCSS",
+  "description": "TailwindCSS utility patterns, custom configurations, responsive design, dark mode",
+  "tags": [
+    "tailwind",
+    "css",
+    "styling"
+  ]
+}

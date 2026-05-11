@@ -1,0 +1,9 @@
+{
+  "name": "Next.js",
+  "description": "Next.js 14+ App Router patterns, SSR/SSG, layouts, loading states, error boundaries, API routes",
+  "tags": [
+    "nextjs",
+    "react",
+    "ssr"
+  ]
+}

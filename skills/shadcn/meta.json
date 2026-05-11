@@ -1,0 +1,9 @@
+{
+  "name": "shadcn/ui",
+  "description": "shadcn/ui component usage, customization, theming, and composition patterns",
+  "tags": [
+    "shadcn",
+    "components",
+    "ui"
+  ]
+}

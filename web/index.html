@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Roobie — AI Coding Assistant</title>
+    <meta name="description" content="Roobie: Autonomous local-first AI coding assistant. Like Claude Code, but runs in your browser.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+    <!-- Top Bar -->
+    <header class="top-bar">
+        <div class="top-bar-left">
+            <button class="sidebar-toggle" id="sidebarToggle" title="Toggle file tree">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12h18M3 6h18M3 18h18"/></svg>
+            </button>
+            <div class="logo">
+                <span class="logo-icon">🤖</span>
+                <span class="logo-text">Roobie</span>
+            </div>
+        </div>
+        <div class="top-bar-center">
+            <div class="model-selector">
+                <label>Model:</label>
+                <select id="modelSelect">
+                    <option value="qwen2.5-coder:3b">qwen2.5-coder:3b</option>
+                    <option value="deepseek-coder:1.3b">deepseek-coder:1.3b</option>
+                    <option value="deepseek-r1:1.5b">deepseek-r1:1.5b</option>
+                    <option value="llama3.2:3b">llama3.2:3b</option>
+                    <option value="codellama:7b">codellama:7b</option>
+                </select>
+            </div>
+        </div>
+        <div class="top-bar-right">
+            <div class="status-indicator" id="statusIndicator">
+                <span class="status-dot"></span>
+                <span class="status-text">Connecting...</span>
+            </div>
+            <button class="btn-icon" id="clearChat" title="Clear chat">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg>
+            </button>
+            <button class="btn-icon" id="settingsBtn" title="Settings">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83 0 2 2 0 010-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9c.2.65.78 1.1 1.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
+            </button>
+        </div>
+    </header>
+
+    <!-- Main Layout -->
+    <main class="main-layout">
+        <!-- Sidebar: File Tree -->
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <h3>📁 Files</h3>
+                <button class="btn-icon btn-sm" id="refreshTree" title="Refresh">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 4v6h-6M1 20v-6h6"/><path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/></svg>
+                </button>
+            </div>
+            <div class="file-tree" id="fileTree">
+                <div class="tree-loading">Loading files...</div>
+            </div>
+        </aside>
+
+        <!-- Center: Chat + Tool Calls -->
+        <section class="chat-area">
+            <div class="chat-messages" id="chatMessages">
+                <!-- Welcome message -->
+                <div class="welcome-screen" id="welcomeScreen">
+                    <div class="welcome-icon">🤖</div>
+                    <h1>Roobie</h1>
+                    <p class="welcome-subtitle">Your autonomous AI coding assistant</p>
+                    <div class="welcome-features">
+                        <div class="feature-card">
+                            <span class="feature-icon">📁</span>
+                            <span>Create & edit files</span>
+                        </div>
+                        <div class="feature-card">
+                            <span class="feature-icon">💻</span>
+                            <span>Run terminal commands</span>
+                        </div>
+                        <div class="feature-card">
+                            <span class="feature-icon">🔍</span>
+                            <span>Search the web</span>
+                        </div>
+                        <div class="feature-card">
+                            <span class="feature-icon">🧠</span>
+                            <span>Think & reason</span>
+                        </div>
+                        <div class="feature-card">
+                            <span class="feature-icon">🚀</span>
+                            <span>Launch dev servers</span>
+                        </div>
+                        <div class="feature-card">
+                            <span class="feature-icon">✏️</span>
+                            <span>Modify & iterate</span>
+                        </div>
+                    </div>
+                    <p class="welcome-hint">Type a message below to get started. Try: "Create a modern landing page with HTML, CSS, and JS"</p>
+                </div>
+            </div>
+
+            <!-- Input Area -->
+            <div class="chat-input-area">
+                <div class="input-wrapper">
+                    <textarea 
+                        id="chatInput" 
+                        placeholder="Ask Roobie anything... (Shift+Enter for newline)"
+                        rows="1"
+                        autofocus
+                    ></textarea>
+                    <button class="send-btn" id="sendBtn" title="Send (Enter)">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"/></svg>
+                    </button>
+                </div>
+                <div class="input-hints">
+                    <span>Enter to send · Shift+Enter for new line</span>
+                    <span id="charCount"></span>
+                </div>
+            </div>
+        </section>
+
+        <!-- Right Panel: Terminal + Preview -->
+        <aside class="right-panel" id="rightPanel">
+            <div class="panel-tabs">
+                <button class="panel-tab active" data-panel="terminal">💻 Terminal</button>
+                <button class="panel-tab" data-panel="preview">🌐 Preview</button>
+            </div>
+            <div class="panel-content" id="terminalPanel">
+                <div class="terminal-output" id="terminalOutput">
+                    <div class="terminal-welcome">Terminal ready. Commands executed by Roobie will appear here.</div>
+                </div>
+                <div class="terminal-input-area">
+                    <span class="terminal-prompt">$</span>
+                    <input type="text" id="terminalInput" placeholder="Run a command..." />
+                </div>
+            </div>
+            <div class="panel-content hidden" id="previewPanel">
+                <div class="preview-bar">
+                    <input type="text" id="previewUrl" placeholder="http://localhost:3000" />
+                    <button class="btn-sm" id="previewRefresh">↻</button>
+                </div>
+                <iframe id="previewFrame" src="about:blank"></iframe>
+            </div>
+        </aside>
+    </main>
+
+    <script src="/static/js/app.js"></script>
+</body>
+</html>

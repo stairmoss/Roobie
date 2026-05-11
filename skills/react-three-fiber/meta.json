@@ -1,0 +1,9 @@
+{
+  "name": "React Three Fiber",
+  "description": "R3F declarative 3D, Drei helpers, physics, performance optimization for 4GB RAM",
+  "tags": [
+    "3d",
+    "r3f",
+    "react"
+  ]
+}

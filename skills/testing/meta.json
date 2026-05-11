@@ -1,0 +1,9 @@
+{
+  "name": "Testing",
+  "description": "Testing patterns: unit, integration, e2e with Playwright, component testing",
+  "tags": [
+    "testing",
+    "playwright",
+    "jest"
+  ]
+}

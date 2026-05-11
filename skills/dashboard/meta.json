@@ -1,0 +1,9 @@
+{
+  "name": "Dashboard",
+  "description": "Dashboard UI patterns: data tables, charts, sidebar navigation, analytics widgets",
+  "tags": [
+    "dashboard",
+    "admin",
+    "analytics"
+  ]
+}

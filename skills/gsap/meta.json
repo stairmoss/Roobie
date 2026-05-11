@@ -1,0 +1,9 @@
+{
+  "name": "GSAP",
+  "description": "GSAP animation timelines, ScrollTrigger, morphing, text effects, stagger animations",
+  "tags": [
+    "animation",
+    "gsap",
+    "scroll"
+  ]
+}

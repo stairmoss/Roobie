@@ -1,0 +1,9 @@
+{
+  "name": "Debugging",
+  "description": "Debugging strategies, error handling, logging, dev tools, common pitfalls",
+  "tags": [
+    "debug",
+    "errors",
+    "logging"
+  ]
+}

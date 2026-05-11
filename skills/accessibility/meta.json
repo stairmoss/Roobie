@@ -1,0 +1,9 @@
+{
+  "name": "Accessibility",
+  "description": "WCAG 2.1 compliance, ARIA labels, keyboard navigation, screen readers, color contrast",
+  "tags": [
+    "a11y",
+    "accessibility",
+    "wcag"
+  ]
+}

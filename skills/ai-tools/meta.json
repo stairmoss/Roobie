@@ -1,0 +1,9 @@
+{
+  "name": "AI Tools",
+  "description": "AI tool interfaces: chat UIs, prompt builders, model selectors, streaming responses",
+  "tags": [
+    "ai",
+    "chat",
+    "tools"
+  ]
+}

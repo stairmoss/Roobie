@@ -1,0 +1,9 @@
+{
+  "name": "Deployment",
+  "description": "Deployment strategies: Vercel, Docker, CI/CD, environment configuration",
+  "tags": [
+    "deploy",
+    "docker",
+    "ci"
+  ]
+}

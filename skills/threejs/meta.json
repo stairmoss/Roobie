@@ -1,0 +1,9 @@
+{
+  "name": "Three.js",
+  "description": "Three.js 3D scenes, materials, lighting, post-processing, optimized for low-end devices",
+  "tags": [
+    "3d",
+    "threejs",
+    "webgl"
+  ]
+}
