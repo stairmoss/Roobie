@@ -1,163 +1,192 @@
-# Roobie 🤖
+# 🤖 Roobie — Autonomous AI Coding Agent
 
-**Autonomous Local-First AI Web Developer**
-
-Roobie is a lightweight CLI tool that autonomously researches, plans, generates, tests, analyzes, improves, and optimizes modern production-ready websites — running entirely locally on open-source models.
+> Local-first autonomous AI coding agent · Like Claude Code, but runs **offline** on **4GB RAM**
 
 ---
 
-## ✨ Features
+## What is Roobie?
 
-| Feature | Description |
-|---------|-------------|
-| 🧠 Autonomous Planning | Understands requests, decomposes tasks, creates architecture |
-| 🔍 Research Engine | SearXNG + crawl4ai for competitor analysis and SEO research |
-| 🎨 Frontend Generation | Next.js 14, TypeScript, TailwindCSS, shadcn/ui, Framer Motion |
-| ⚙️ Backend Generation | FastAPI + SQLite with modular architecture |
-| 📸 Screenshot Capture | Multi-viewport Playwright screenshots |
-| 👁️ Vision Analysis | Moondream AI analyzes UI quality, spacing, typography |
-| 🔄 Improvement Loop | Autonomous fix → retest → improve cycle |
-| 🔎 SEO Optimization | Metadata, schema, sitemap, robots.txt, Lighthouse 95+ |
-| 📚 Dynamic Skills | 30+ Claude-style skill modules loaded per project |
-| 🎮 3D Support | React Three Fiber for interactive 3D scenes |
-| 💾 Memory System | SQLite + ChromaDB for persistent project memory |
-| 🔌 MCP Integration | Filesystem, terminal, SQLite tool interfaces |
+Roobie is a **terminal-based autonomous AI coding agent** powered by **AirLLM** (disk-offloaded inference).
 
----
+You type a coding task, and Roobie:
+- 🧠 **Plans** the project
+- 📄 **Creates & edits files**
+- 💻 **Runs terminal commands**
+- 🔍 **Searches the web**
+- 🚀 **Starts localhost servers**
+- 🔄 **Debugs and improves** autonomously
 
-## 🏗️ Architecture
-
-```
-roobie/
-├── agent/          # Agent orchestrator (16-stage pipeline)
-├── browser/        # Playwright browser automation
-├── cli/            # Typer + Rich CLI interface
-├── config/         # Settings, paths, environment
-├── frontend/       # Next.js code generation
-├── backend/        # FastAPI code generation
-├── memory/         # SQLite + ChromaDB storage
-├── models/         # Ollama model management
-├── mcp/            # MCP tool server
-├── prompts/        # System prompt templates
-├── research/       # SearXNG + crawl4ai research
-├── sandbox/        # Project scaffolding + localhost
-├── seo/            # SEO optimization engine
-├── skills/         # 30+ dynamic skill modules
-├── vision/         # Moondream screenshot analysis
-├── workflows/      # Improvement loop orchestration
-├── logs/           # Structured logging
-├── main.py         # Entry point
-├── requirements.txt
-└── setup.py
-```
+Similar to **Claude Code** and **Gemini CLI**, but:
+- ✅ Fully **offline** (no API keys)
+- ✅ Runs on **4GB RAM** (CPU only)
+- ✅ Uses **AirLLM** (disk-offloaded quantized models)
+- ✅ No Ollama required
 
 ---
 
-## 🚀 Quick Start
-
-### 1. Clone & Install
+## Installation
 
 ```bash
-git clone https://github.com/yourname/roobie.git
+# 1. Clone and enter the project
 cd roobie
+
+# 2. Create virtual environment
+python3 -m venv .venv
+source .venv/bin/activate  # Windows: .venv\Scripts\activate
+
+# 3. Install core dependencies
 pip install -r requirements.txt
-```
 
-### 2. Install Playwright
-
-```bash
-playwright install chromium
-```
-
-### 3. Install Ollama & Models
-
-```bash
-# Install Ollama (https://ollama.ai)
-curl -fsSL https://ollama.ai/install.sh | sh
-
-# Pull required models
-ollama pull qwen2.5-coder:3b
-ollama pull deepseek-r1:1.5b
-ollama pull moondream:latest
-```
-
-### 4. Run Roobie
-
-```bash
-python main.py build "Build a modern SaaS landing page with pricing"
+# 4. Install AirLLM + PyTorch (CPU)
+pip install airllm transformers accelerate
+pip install torch --index-url https://download.pytorch.org/whl/cpu
 ```
 
 ---
 
-## 📋 CLI Commands
+## Quick Start
+
+```bash
+# Start interactive chat (default model: deepseek-coder-1.3b)
+python main.py
+
+# Use a specific model
+python main.py chat --model Qwen/Qwen2.5-Coder-3B-Instruct
+
+# Set a workspace directory
+python main.py chat --workspace ~/my-project
+
+# One-shot task (non-interactive)
+python main.py run "Build me a FastAPI REST API with CRUD operations"
+
+# Web search
+python main.py search "Next.js 15 new features"
+
+# System status
+python main.py status
+```
+
+---
+
+## Recommended Models (AirLLM)
+
+| Model | Size | Best For |
+|-------|------|----------|
+| `deepseek-ai/deepseek-coder-1.3b-instruct` | ~800MB | Fast, lightweight coding |
+| `Qwen/Qwen2.5-Coder-3B-Instruct` | ~2GB | Best quality, recommended |
+| `deepseek-ai/DeepSeek-R1-Distill-Qwen-1.5B` | ~1GB | Reasoning & planning |
+
+Models are **auto-downloaded** from HuggingFace on first use.
+AirLLM splits them into chunks and streams from disk — **no full RAM loading**.
+
+---
+
+## CLI Commands
 
 | Command | Description |
 |---------|-------------|
-| `roobie build <prompt>` | Build a website from natural language |
-| `roobie init <name>` | Initialize a new project |
-| `roobie think <prompt>` | Analyze without building |
-| `roobie research <query>` | Research a topic |
-| `roobie preview <project>` | Preview in browser |
-| `roobie screenshot <project>` | Capture screenshots |
-| `roobie improve <project>` | Run improvement loop |
-| `roobie seo <project>` | Optimize SEO |
-| `roobie analyze <project>` | Vision-based UI analysis |
-| `roobie skills` | List available skills |
-| `roobie models` | List AI models |
-| `roobie status` | System health check |
-| `roobie chat` | Interactive chat mode |
+| `/help` | Show all commands |
+| `/models` | List available models |
+| `/model <name>` | Switch model |
+| `/clear` | Clear conversation history |
+| `/tree` | Show workspace file tree |
+| `/run <cmd>` | Run a shell command directly |
+| `/read <path>` | Read a file |
+| `/search <query>` | Web search |
+| `/status` | System status |
+| `/workspace <path>` | Change workspace |
+| `/exit` | Quit |
 
 ---
 
-## 🤖 AI Models
-
-| Model | Purpose | Size |
-|-------|---------|------|
-| Qwen2.5 Coder 3B | Code generation | ~2GB |
-| DeepSeek Coder 1.3B | Lightweight coding | ~1GB |
-| DeepSeek R1 1.5B | Reasoning & planning | ~1GB |
-| Moondream | Vision / screenshots | ~1GB |
-
-All models run locally via Ollama with Q4_K_M quantization.
-
----
-
-## 📚 Skill System
-
-30+ dynamic skills automatically loaded based on project type:
-
-**Core:** uiux, seo, accessibility, performance, debugging, testing, architecture, deployment
-
-**Web:** nextjs, react, tailwind, shadcn, framer-motion, gsap, threejs, animations
-
-**Product:** saas, startup, dashboard, landingpage, ecommerce, portfolio, blog, agency
-
-**AI Agent:** planning, reasoning, self-improvement
-
----
-
-## 🔄 Autonomous Workflow
+## Example Session
 
 ```
-User Request → Understand → Research → Plan Architecture → Load Skills
-    → Generate Frontend → Generate Backend → Run Localhost
-    → Browser Test → Screenshot → Vision Analysis
-    → Improve UI → Optimize SEO → Finalize
+roobie> Build me a modern SaaS landing page with HTML, CSS, and JavaScript
+
+🧠 Thinking...
+
+📄 Create File → index.html
+✓ Created index.html (4.2 KB)
+
+📄 Create File → style.css
+✓ Created style.css (2.8 KB)
+
+📄 Create File → app.js
+✓ Created app.js (1.1 KB)
+
+💻 Run Command → python3 -m http.server 8080
+✓ Server started at http://localhost:8080
+
+🤖 Roobie: Done! I created a modern SaaS landing page with:
+- Responsive hero section with gradient
+- Features section with cards
+- Pricing table
+- CTA section
+- Smooth scroll animations
+
+Open http://localhost:8080 to see it.
 ```
 
 ---
 
-## ⚡ Performance
+## Environment Variables
 
-Optimized for **4GB RAM** systems:
-- CPU-only inference
-- Quantized models (Q4_K_M GGUF)
-- Lazy-loaded subsystems
-- Streaming inference
-- Minimal dependencies
+Copy `.env.example` to `.env`:
+
+```bash
+cp .env.example .env
+```
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `ROOBIE_MODEL` | `deepseek-ai/deepseek-coder-1.3b-instruct` | HuggingFace model ID |
+| `ROOBIE_WORKSPACE` | `~/.roobie/workspace` | Working directory |
+| `ROOBIE_OLLAMA_HOST` | `http://localhost:11434` | Ollama fallback |
+| `ROOBIE_MAX_TOOL_LOOPS` | `10` | Max tool calls per turn |
 
 ---
 
-## 📄 License
+## Architecture
 
-MIT License
+```
+roobie/
+├── main.py               ← Entry point
+├── cli/
+│   └── app.py            ← Typer CLI (chat loop, slash commands)
+├── agent/
+│   ├── chat_engine.py    ← Agentic loop (AirLLM + tool calling)
+│   └── tool_executor.py  ← Dispatches tool calls
+├── tools/
+│   ├── file_tools.py     ← Create, edit, read, delete files
+│   ├── terminal_tools.py ← Run shell commands safely
+│   ├── search_tools.py   ← Web search (no API key)
+│   └── thinking_tools.py ← Chain-of-thought reasoning
+├── models/
+│   └── manager.py        ← AirLLM + Ollama model management
+├── browser/
+│   └── automation.py     ← Playwright browser automation
+├── vision/
+│   └── analyzer.py       ← Screenshot analysis (Moondream)
+├── memory/
+│   └── store.py          ← SQLite conversation memory
+└── prompts/
+    └── templates.py      ← System prompts
+```
+
+---
+
+## Hardware Requirements
+
+| Component | Minimum | Recommended |
+|-----------|---------|-------------|
+| RAM | 4GB | 8GB |
+| CPU | Any x86_64 | Modern multi-core |
+| Storage | 2GB free | 5GB free |
+| GPU | Not required | Optional (CUDA) |
+
+---
+
+## License
+
+MIT License — see `LICENSE`

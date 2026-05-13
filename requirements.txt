@@ -1,20 +1,28 @@
 # ──────────────────────────────────────────────────────
-# Roobie — Dependencies (Lightweight CLI)
+# Roobie — CLI Dependencies
 # ──────────────────────────────────────────────────────
 
-# CLI Framework
+# ── CLI Framework ─────────────────────────────────────
 typer>=0.9.0
 rich>=13.7.0
 prompt_toolkit>=3.0.0
 
-# HTTP (for Ollama + web search)
+# ── HTTP (web search, Ollama fallback) ────────────────
 requests>=2.31.0
+beautifulsoup4>=4.12.0
 
-# System Info
+# ── System Info ───────────────────────────────────────
 psutil>=5.9.0
 
 # ──────────────────────────────────────────────────────
-# Optional (install as needed)
+# AirLLM — Local AI Engine (primary, install manually)
+# pip install airllm
+# pip install torch --index-url https://download.pytorch.org/whl/cpu
+# pip install transformers accelerate
 # ──────────────────────────────────────────────────────
-# playwright>=1.41.0         # Browser automation/screenshots
-# beautifulsoup4>=4.12.0     # HTML parsing
+
+# ── Browser Automation (optional) ─────────────────────
+# pip install playwright && playwright install chromium
+
+# ── Vision (optional, via Ollama moondream) ───────────
+# ollama pull moondream

@@ -1,7 +1,7 @@
 """
 Roobie Chat Engine
 Agentic loop: user message → LLM → tool calls → execute → results → LLM → repeat.
-Works with small local models (3B-7B params) via Ollama.
+Primary: AirLLM (disk-offloaded, 4GB RAM). Fallback: Ollama.
 """
 
 import json
@@ -82,7 +82,11 @@ class ChatEngine:
             self._event_callback(event_type, data)
 
     def check_model(self) -> bool:
-        """Check if Ollama is running and model is available."""
+        """Check if AI is available (AirLLM model set OR Ollama running)."""
+        # If model looks like a HuggingFace id it uses AirLLM — always OK
+        if "/" in self.model:
+            return True
+        # Otherwise check Ollama
         try:
             r = requests.get(f"{self.ollama_host}/api/tags", timeout=5)
             return r.status_code == 200
@@ -160,12 +164,12 @@ class ChatEngine:
 
     def _generate(self, messages: List[Dict]) -> str:
         """Generate a response from AirLLM or Ollama."""
-        # Build messages with system prompt
         full_messages = [
             {"role": "system", "content": SYSTEM_PROMPT}
-        ] + messages[-20:]  # Keep last 20 messages for context window
+        ] + messages[-20:]
 
-        if "/" in self.model or "deepseek-ai" in self.model:
+        # HuggingFace model ids always contain '/' → use AirLLM
+        if "/" in self.model:
             return self._airllm_generate(full_messages)
         else:
             return self._ollama_generate(full_messages)
@@ -199,44 +203,43 @@ class ChatEngine:
     def _airllm_generate(self, full_messages: List[Dict]) -> str:
         """Generate text using AirLLM disk-offloaded inference."""
         if not hasattr(self, "_airllm_model"):
-            self._emit("assistant_message", {"content": f"Loading AirLLM model {self.model} (may take a minute)...\\n", "partial": True})
+            self._emit("assistant_message", {"content": f"⏳ Loading AirLLM model {self.model} (first run takes a minute)...\n", "partial": True})
             try:
                 from airllm import AutoModel
                 from transformers import AutoTokenizer
                 self._airllm_model = AutoModel.from_pretrained(
                     self.model,
                     compression="4bit",
-                    profiling_mode=True
+                    profiling_mode=False
                 )
                 self._airllm_tokenizer = AutoTokenizer.from_pretrained(self.model)
-                self._emit("assistant_message", {"content": "AirLLM model loaded.\\n", "partial": True})
+                self._emit("assistant_message", {"content": "✅ AirLLM model loaded.\n", "partial": True})
             except ImportError:
-                self._emit("error", {"message": "AirLLM not installed. Install with: pip install airllm"})
+                self._emit("error", {"message": "AirLLM not installed. Run: pip install airllm transformers torch"})
                 return ""
             except Exception as e:
                 self._emit("error", {"message": f"AirLLM loading error: {e}"})
                 return ""
 
-        # Build prompt from messages using chat template if available
+        # Build prompt using chat template if available
         try:
             prompt = self._airllm_tokenizer.apply_chat_template(
-                full_messages, 
-                tokenize=False, 
+                full_messages,
+                tokenize=False,
                 add_generation_prompt=True
             )
         except Exception:
-            # Fallback for tokenizers without chat template
+            # Fallback manual prompt construction
             prompt = ""
             for m in full_messages:
-                role = m["role"]
-                content = m["content"]
+                role, content = m["role"], m["content"]
                 if role == "system":
-                    prompt += f"{content}\\n\\n"
+                    prompt += f"{content}\n\n"
                 elif role == "user":
-                    prompt += f"### Instruction:\\n{content}\\n\\n"
+                    prompt += f"### Instruction:\n{content}\n\n"
                 elif role == "assistant":
-                    prompt += f"### Response:\\n{content}\\n\\n"
-            prompt += "### Response:\\n"
+                    prompt += f"### Response:\n{content}\n\n"
+            prompt += "### Response:\n"
 
         try:
             input_ids = self._airllm_tokenizer(
@@ -245,14 +248,14 @@ class ChatEngine:
                 truncation=True,
                 max_length=4096
             ).input_ids
-            
+
             generation_output = self._airllm_model.generate(
                 input_ids,
                 max_new_tokens=1024,
                 use_cache=True,
                 return_dict_in_generate=True,
             )
-            
+
             output_ids = generation_output.sequences[0][input_ids.shape[1]:]
             response = self._airllm_tokenizer.decode(output_ids, skip_special_tokens=True)
             return response.strip()

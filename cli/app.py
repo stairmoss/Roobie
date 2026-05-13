@@ -1,7 +1,7 @@
 """
 Roobie CLI — Autonomous AI Coding Assistant
 Interactive terminal-based agentic coding tool.
-Like Claude Code, but runs locally with Ollama.
+Like Claude Code, but runs locally with AirLLM (disk-offloaded, 4GB RAM).
 """
 
 import typer
@@ -41,7 +41,7 @@ BANNER = """[bold cyan]
  ██║  ██║╚██████╔╝╚██████╔╝██████╔╝██║███████╗
  ╚═╝  ╚═╝ ╚═════╝  ╚═════╝ ╚═════╝ ╚═╝╚══════╝
 [/bold cyan]
-[dim]Autonomous AI Coding Assistant • Local-first • Ollama-powered[/dim]"""
+[dim]Autonomous AI Coding Agent • Local-first • AirLLM-powered • Works offline[/dim]"""
 
 
 def show_banner():
@@ -207,23 +207,26 @@ def chat(
     # Resolve workspace
     ws = workspace or os.getcwd()
     ws = os.path.abspath(ws)
-    mdl = model or os.environ.get("ROOBIE_MODEL", "deepseek-ai/deepseek-coder-6.7b-instruct")
+    mdl = model or os.environ.get("ROOBIE_MODEL", "deepseek-ai/deepseek-coder-1.3b-instruct")
     host = ollama_host or os.environ.get("ROOBIE_OLLAMA_HOST", "http://localhost:11434")
 
     console.print(f"\n  📁 Workspace: [cyan]{ws}[/cyan]")
     console.print(f"  🧠 Model:     [cyan]{mdl}[/cyan]")
-    console.print(f"  🔗 Ollama:    [cyan]{host}[/cyan]")
 
     # Import chat engine
     from agent.chat_engine import ChatEngine
 
     engine = ChatEngine(ws, host, mdl)
 
-    # Check Ollama connection
+    # Check AI backend availability
     if engine.check_model():
-        console.print(f"  ✅ Ollama connected\n")
+        if "/" in mdl:
+            console.print(f"  ✅ AirLLM ready (will load on first message)\n")
+        else:
+            console.print(f"  ✅ Ollama connected\n")
     else:
-        console.print(f"  [red]❌ Ollama not running. Start with: ollama serve[/red]\n")
+        console.print(f"  [yellow]⚠️  Ollama not running. For Ollama models run: ollama serve[/yellow]")
+        console.print(f"  [dim]   For AirLLM models: set ROOBIE_MODEL to a HuggingFace model id[/dim]\n")
 
     console.print(Rule("Chat", style="cyan"))
     console.print("[dim]  Type your message and press Enter. Commands: /help /clear /tree /model /exit[/dim]\n")
@@ -393,27 +396,38 @@ def handle_slash(cmd: str, engine) -> Optional[str]:
     elif command == "/model":
         if arg:
             engine.model = arg
-            console.print(f"  [green]✓ Model changed to: {arg}[/green]")
+            backend = "AirLLM" if "/" in arg else "Ollama"
+            console.print(f"  [green]✓ Model changed to: {arg} ({backend})[/green]")
         else:
-            console.print(f"  Current model: [cyan]{engine.model}[/cyan]")
+            backend = "AirLLM" if "/" in engine.model else "Ollama"
+            console.print(f"  Current model: [cyan]{engine.model}[/cyan] ({backend})")
 
     elif command == "/models":
+        table = Table(title="Available Models")
+        table.add_column("Model", style="cyan")
+        table.add_column("Backend", style="yellow")
+        table.add_column("Size", style="dim")
+        table.add_column("Best For")
+        # AirLLM models (recommended)
+        airllm_models = [
+            ("deepseek-ai/deepseek-coder-1.3b-instruct", "~800MB", "Fast coding"),
+            ("Qwen/Qwen2.5-Coder-3B-Instruct",           "~2GB",   "Balanced coding"),
+            ("deepseek-ai/DeepSeek-R1-Distill-Qwen-1.5B", "~1GB",  "Reasoning"),
+        ]
+        for name, size, purpose in airllm_models:
+            table.add_row(name, "[green]AirLLM[/green]", size, purpose)
+        # Ollama models (if available)
         try:
-            import requests
-            r = requests.get(f"{engine.ollama_host}/api/tags", timeout=5)
+            import requests as _req
+            r = _req.get(f"{engine.ollama_host}/api/tags", timeout=3)
             if r.status_code == 200:
-                models = r.json().get("models", [])
-                table = Table(title="Available Models")
-                table.add_column("Name", style="cyan")
-                table.add_column("Size", style="yellow")
-                for m in models:
+                for m in r.json().get("models", []):
                     size_gb = m.get("size", 0) / (1024**3)
-                    table.add_row(m["name"], f"{size_gb:.1f} GB")
-                console.print(table)
-            else:
-                console.print("  [red]Failed to list models[/red]")
-        except Exception as e:
-            console.print(f"  [red]Ollama not reachable: {e}[/red]")
+                    table.add_row(m["name"], "[blue]Ollama[/blue]", f"{size_gb:.1f}GB", "general")
+        except Exception:
+            pass
+        console.print(table)
+        console.print("[dim]Use /model <name> to switch. AirLLM models download on first use.[/dim]")
 
     elif command == "/run":
         if not arg:
@@ -535,23 +549,27 @@ def _show_status(engine):
     table.add_column("Component", style="white")
     table.add_column("Status")
 
-    # Workspace
     table.add_row("Workspace", f"[cyan]{engine.workspace_dir}[/cyan]")
     table.add_row("Model", f"[cyan]{engine.model}[/cyan]")
-    table.add_row("Ollama", f"[cyan]{engine.ollama_host}[/cyan]")
 
-    # Check Ollama
-    if engine.check_model():
-        table.add_row("Ollama Status", "[green]✅ Connected[/green]")
-        try:
-            import requests
-            r = requests.get(f"{engine.ollama_host}/api/tags", timeout=5)
-            models = [m["name"] for m in r.json().get("models", [])]
-            table.add_row("Models", ", ".join(models))
-        except Exception:
-            pass
+    # AI backend status
+    if "/" in engine.model:
+        table.add_row("AI Backend", "[green]AirLLM (disk-offloaded)[/green]")
+        loaded = hasattr(engine, "_airllm_model")
+        table.add_row("Model State", "[green]✅ Loaded[/green]" if loaded else "[yellow]⏳ Will load on first message[/yellow]")
     else:
-        table.add_row("Ollama Status", "[red]❌ Not running[/red]")
+        table.add_row("Ollama Host", f"[cyan]{engine.ollama_host}[/cyan]")
+        if engine.check_model():
+            table.add_row("Ollama", "[green]✅ Connected[/green]")
+            try:
+                import requests
+                r = requests.get(f"{engine.ollama_host}/api/tags", timeout=5)
+                models = [m["name"] for m in r.json().get("models", [])]
+                table.add_row("Ollama Models", ", ".join(models) if models else "(none)")
+            except Exception:
+                pass
+        else:
+            table.add_row("Ollama", "[red]❌ Not running[/red]")
 
     # RAM
     try:
@@ -562,11 +580,8 @@ def _show_status(engine):
     except ImportError:
         pass
 
-    # Node
-    table.add_row("Node.js", "[green]✅[/green]" if shutil.which("node") else "[red]❌[/red]")
-    table.add_row("Python", f"[green]✅ {sys.version.split()[0]}[/green]")
-
-    # Conversation
+    table.add_row("Node.js",  "[green]✅[/green]" if shutil.which("node")    else "[red]❌[/red]")
+    table.add_row("Python",   f"[green]✅ {sys.version.split()[0]}[/green]")
     table.add_row("Chat History", f"{len(engine.conversation)} messages")
 
     console.print(table)
@@ -616,7 +631,7 @@ def status():
     show_banner()
     ws = os.environ.get("ROOBIE_WORKSPACE", os.getcwd())
     host = os.environ.get("ROOBIE_OLLAMA_HOST", "http://localhost:11434")
-    mdl = os.environ.get("ROOBIE_MODEL", "qwen2.5-coder:3b")
+    mdl = os.environ.get("ROOBIE_MODEL", "deepseek-ai/deepseek-coder-1.3b-instruct")
 
     from agent.chat_engine import ChatEngine
     engine = ChatEngine(ws, host, mdl)
