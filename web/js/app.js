@@ -13,7 +13,7 @@
         connected: false,
         processing: false,
         messages: [],
-        currentModel: 'qwen2.5-coder:3b',
+        currentModel: 'deepseek-ai/deepseek-coder-1.3b-instruct',
     };
 
     // ── DOM References ─────────────────────────────────
@@ -660,7 +660,25 @@
             const res = await fetch('/api/status');
             const data = await res.json();
 
-            if (data.ollama?.connected) {
+            if (data.airllm?.ready) {
+                const stateText = data.airllm.loaded ? 'AirLLM active' : 'AirLLM ready';
+                setStatus('connected', stateText);
+                
+                // Set/update the model list if models exist
+                if (data.airllm.models && data.airllm.models.length > 0) {
+                    const currentVal = modelSelect.value;
+                    modelSelect.innerHTML = '';
+                    for (const model of data.airllm.models) {
+                        const opt = document.createElement('option');
+                        opt.value = model;
+                        opt.textContent = model;
+                        if (model === currentVal || model === data.current_model) {
+                            opt.selected = true;
+                        }
+                        modelSelect.appendChild(opt);
+                    }
+                }
+            } else if (data.ollama?.connected) {
                 setStatus('connected', 'Ollama connected');
                 // Update model selector with available models
                 if (data.ollama.models && data.ollama.models.length > 0) {
@@ -677,7 +695,7 @@
                     }
                 }
             } else {
-                setStatus('error', 'Ollama not connected');
+                setStatus('error', 'Backend not connected');
             }
         } catch (e) {
             setStatus('error', 'Server error');

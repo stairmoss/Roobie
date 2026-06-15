@@ -198,8 +198,7 @@ def display_assistant_text(text: str):
 @app.command()
 def chat(
     workspace: Optional[str] = typer.Option(None, "--workspace", "-w", help="Workspace directory"),
-    model: Optional[str] = typer.Option(None, "--model", "-m", help="Ollama model to use"),
-    ollama_host: Optional[str] = typer.Option(None, "--ollama", help="Ollama host URL"),
+    model: Optional[str] = typer.Option(None, "--model", "-m", help="AirLLM model to use"),
 ):
     """💬 Start interactive agentic chat (the main Roobie experience)."""
     show_banner()
@@ -208,7 +207,6 @@ def chat(
     ws = workspace or os.getcwd()
     ws = os.path.abspath(ws)
     mdl = model or os.environ.get("ROOBIE_MODEL", "deepseek-ai/deepseek-coder-1.3b-instruct")
-    host = ollama_host or os.environ.get("ROOBIE_OLLAMA_HOST", "http://localhost:11434")
 
     console.print(f"\n  📁 Workspace: [cyan]{ws}[/cyan]")
     console.print(f"  🧠 Model:     [cyan]{mdl}[/cyan]")
@@ -216,17 +214,9 @@ def chat(
     # Import chat engine
     from agent.chat_engine import ChatEngine
 
-    engine = ChatEngine(ws, host, mdl)
+    engine = ChatEngine(ws, mdl)
 
-    # Check AI backend availability
-    if engine.check_model():
-        if "/" in mdl:
-            console.print(f"  ✅ AirLLM ready (will load on first message)\n")
-        else:
-            console.print(f"  ✅ Ollama connected\n")
-    else:
-        console.print(f"  [yellow]⚠️  Ollama not running. For Ollama models run: ollama serve[/yellow]")
-        console.print(f"  [dim]   For AirLLM models: set ROOBIE_MODEL to a HuggingFace model id[/dim]\n")
+    console.print(f"  ✅ AirLLM ready (will load on first message)\n")
 
     console.print(Rule("Chat", style="cyan"))
     console.print("[dim]  Type your message and press Enter. Commands: /help /clear /tree /model /exit[/dim]\n")
@@ -396,11 +386,9 @@ def handle_slash(cmd: str, engine) -> Optional[str]:
     elif command == "/model":
         if arg:
             engine.model = arg
-            backend = "AirLLM" if "/" in arg else "Ollama"
-            console.print(f"  [green]✓ Model changed to: {arg} ({backend})[/green]")
+            console.print(f"  [green]✓ Model changed to: {arg} (AirLLM)[/green]")
         else:
-            backend = "AirLLM" if "/" in engine.model else "Ollama"
-            console.print(f"  Current model: [cyan]{engine.model}[/cyan] ({backend})")
+            console.print(f"  Current model: [cyan]{engine.model}[/cyan] (AirLLM)")
 
     elif command == "/models":
         table = Table(title="Available Models")
@@ -416,16 +404,6 @@ def handle_slash(cmd: str, engine) -> Optional[str]:
         ]
         for name, size, purpose in airllm_models:
             table.add_row(name, "[green]AirLLM[/green]", size, purpose)
-        # Ollama models (if available)
-        try:
-            import requests as _req
-            r = _req.get(f"{engine.ollama_host}/api/tags", timeout=3)
-            if r.status_code == 200:
-                for m in r.json().get("models", []):
-                    size_gb = m.get("size", 0) / (1024**3)
-                    table.add_row(m["name"], "[blue]Ollama[/blue]", f"{size_gb:.1f}GB", "general")
-        except Exception:
-            pass
         console.print(table)
         console.print("[dim]Use /model <name> to switch. AirLLM models download on first use.[/dim]")
 
@@ -553,23 +531,9 @@ def _show_status(engine):
     table.add_row("Model", f"[cyan]{engine.model}[/cyan]")
 
     # AI backend status
-    if "/" in engine.model:
-        table.add_row("AI Backend", "[green]AirLLM (disk-offloaded)[/green]")
-        loaded = hasattr(engine, "_airllm_model")
-        table.add_row("Model State", "[green]✅ Loaded[/green]" if loaded else "[yellow]⏳ Will load on first message[/yellow]")
-    else:
-        table.add_row("Ollama Host", f"[cyan]{engine.ollama_host}[/cyan]")
-        if engine.check_model():
-            table.add_row("Ollama", "[green]✅ Connected[/green]")
-            try:
-                import requests
-                r = requests.get(f"{engine.ollama_host}/api/tags", timeout=5)
-                models = [m["name"] for m in r.json().get("models", [])]
-                table.add_row("Ollama Models", ", ".join(models) if models else "(none)")
-            except Exception:
-                pass
-        else:
-            table.add_row("Ollama", "[red]❌ Not running[/red]")
+    table.add_row("AI Backend", "[green]AirLLM (disk-offloaded)[/green]")
+    loaded = hasattr(engine, "_airllm_model")
+    table.add_row("Model State", "[green]✅ Loaded[/green]" if loaded else "[yellow]⏳ Will load on first message[/yellow]")
 
     # RAM
     try:
@@ -595,18 +559,17 @@ def _show_status(engine):
 def run(
     prompt: str = typer.Argument(..., help="What to do"),
     workspace: Optional[str] = typer.Option(None, "--workspace", "-w", help="Workspace directory"),
-    model: Optional[str] = typer.Option(None, "--model", "-m", help="Ollama model"),
+    model: Optional[str] = typer.Option(None, "--model", "-m", help="AirLLM model"),
 ):
     """🚀 Run a one-shot task (non-interactive). E.g.: roobie run 'Create a landing page'"""
     ws = workspace or os.getcwd()
     ws = os.path.abspath(ws)
     mdl = model or os.environ.get("ROOBIE_MODEL", "deepseek-ai/deepseek-coder-6.7b-instruct")
-    host = os.environ.get("ROOBIE_OLLAMA_HOST", "http://localhost:11434")
 
     console.print(f"\n  📁 [cyan]{ws}[/cyan]  🧠 [cyan]{mdl}[/cyan]\n")
 
     from agent.chat_engine import ChatEngine
-    engine = ChatEngine(ws, host, mdl)
+    engine = ChatEngine(ws, mdl)
 
     def event_callback(event_type, data):
         if event_type in ("tool_start", "tool_call"):
@@ -630,11 +593,10 @@ def status():
     """📊 Show system status."""
     show_banner()
     ws = os.environ.get("ROOBIE_WORKSPACE", os.getcwd())
-    host = os.environ.get("ROOBIE_OLLAMA_HOST", "http://localhost:11434")
     mdl = os.environ.get("ROOBIE_MODEL", "deepseek-ai/deepseek-coder-1.3b-instruct")
 
     from agent.chat_engine import ChatEngine
-    engine = ChatEngine(ws, host, mdl)
+    engine = ChatEngine(ws, mdl)
     _show_status(engine)
 
 
@@ -663,8 +625,8 @@ def search(
 def main(ctx: typer.Context):
     """🤖 Roobie — Autonomous AI Coding Assistant. Run 'roobie chat' to start."""
     if ctx.invoked_subcommand is None:
-        # Default to chat mode
-        chat()
+        # Default to chat mode — pass explicit None so Typer resolves defaults properly
+        chat(workspace=None, model=None)
 
 
 if __name__ == "__main__":

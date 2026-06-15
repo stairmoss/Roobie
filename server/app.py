@@ -27,8 +27,7 @@ from tools.search_tools import SearchTools
 
 # ── Config ──────────────────────────────────────────────
 WORKSPACE_DIR = os.environ.get("ROOBIE_WORKSPACE", os.path.expanduser("~/.roobie/workspace"))
-OLLAMA_HOST = os.environ.get("ROOBIE_OLLAMA_HOST", "http://localhost:11434")
-MODEL = os.environ.get("ROOBIE_MODEL", "qwen2.5-coder:3b")
+MODEL = os.environ.get("ROOBIE_MODEL", "deepseek-ai/deepseek-coder-1.3b-instruct")
 PORT = int(os.environ.get("ROOBIE_PORT", "8484"))
 
 # Ensure workspace exists
@@ -46,7 +45,7 @@ app.add_middleware(
 )
 
 # ── State ───────────────────────────────────────────────
-chat_engine = ChatEngine(WORKSPACE_DIR, OLLAMA_HOST, MODEL)
+chat_engine = ChatEngine(WORKSPACE_DIR, MODEL)
 file_tools = FileTools(WORKSPACE_DIR)
 terminal_tools = TerminalTools(WORKSPACE_DIR)
 search_tools = SearchTools()
@@ -289,24 +288,40 @@ async def get_status():
     """Get system status."""
     import shutil
 
+    # AirLLM status
+    airllm_ready = True
+    airllm_loaded = hasattr(chat_engine, "_airllm_model")
+    airllm_models = [
+        "deepseek-ai/deepseek-coder-1.3b-instruct",
+        "Qwen/Qwen2.5-Coder-3B-Instruct",
+        "deepseek-ai/DeepSeek-R1-Distill-Qwen-1.5B"
+    ]
+
+    # Ollama fallback check
+    ollama_host = os.environ.get("ROOBIE_OLLAMA_HOST", "http://localhost:11434")
     ollama_ok = False
-    models = []
+    ollama_models = []
     try:
         import requests as req
-        r = req.get(f"{OLLAMA_HOST}/api/tags", timeout=5)
+        r = req.get(f"{ollama_host}/api/tags", timeout=5)
         if r.status_code == 200:
             ollama_ok = True
-            models = [m["name"] for m in r.json().get("models", [])]
+            ollama_models = [m["name"] for m in r.json().get("models", [])]
     except Exception:
         pass
 
     return {
         "status": "running",
         "workspace": WORKSPACE_DIR,
+        "airllm": {
+            "ready": airllm_ready,
+            "loaded": airllm_loaded,
+            "models": airllm_models,
+        },
         "ollama": {
-            "host": OLLAMA_HOST,
+            "host": ollama_host,
             "connected": ollama_ok,
-            "models": models,
+            "models": ollama_models,
         },
         "current_model": chat_engine.model,
         "node_available": shutil.which("node") is not None,
@@ -329,8 +344,8 @@ def start_server(host: str = "0.0.0.0", port: int = None):
     port = port or PORT
     print(f"\n🤖 Roobie is running at http://localhost:{port}")
     print(f"📁 Workspace: {WORKSPACE_DIR}")
-    print(f"🧠 Model: {MODEL}")
-    print(f"🔗 Ollama: {OLLAMA_HOST}\n")
+    print(f"🧠 Model: {chat_engine.model}")
+    print(f"⚡ Backend: AirLLM (disk-offloaded)\n")
     uvicorn.run(app, host=host, port=port, log_level="info")
 
 

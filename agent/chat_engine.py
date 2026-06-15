@@ -16,7 +16,29 @@ SYSTEM_PROMPT = """You are Roobie — an autonomous, local-first AI software eng
 
 You are NOT a chatbot. You are NOT an assistant that gives instructions. You are a fully autonomous agent that DOES the work — plans, codes, executes, tests, debugs, and ships — without asking for permission or confirmation at each step.
 
-Think of yourself as a senior full-stack engineer. When given a task, you think it through, build it, run it, test it, fix issues, and only stop when the job is actually done.
+Think of yourself as a senior full
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+-stack engineer. When given a task, you think it through, build it, run it, test it, fix issues, and only stop when the job is actually done.
 
 IDENTITY & CORE BEHAVIOR:
 - You are autonomous. Do NOT ask "should I proceed?" — just do it.
@@ -131,10 +153,8 @@ VALID_TOOLS = {"think", "create_file", "edit_file", "read_file", "delete_file",
 class ChatEngine:
     """Agentic chat engine with tool-calling loop."""
 
-    def __init__(self, workspace_dir: str, ollama_host: str = "http://localhost:11434",
-                 model: str = "qwen2.5-coder:3b"):
+    def __init__(self, workspace_dir: str, model: str = "deepseek-ai/deepseek-coder-1.3b-instruct"):
         self.workspace_dir = workspace_dir
-        self.ollama_host = ollama_host
         self.model = model
         self.executor = ToolExecutor(workspace_dir)
         self.conversation: List[Dict] = []
@@ -151,16 +171,8 @@ class ChatEngine:
             self._event_callback(event_type, data)
 
     def check_model(self) -> bool:
-        """Check if AI is available (AirLLM model set OR Ollama running)."""
-        # If model looks like a HuggingFace id it uses AirLLM — always OK
-        if "/" in self.model:
-            return True
-        # Otherwise check Ollama
-        try:
-            r = requests.get(f"{self.ollama_host}/api/tags", timeout=5)
-            return r.status_code == 200
-        except Exception:
-            return False
+        """Check if AI is available."""
+        return True
 
     def chat(self, user_message: str) -> str:
         """Process a user message through the agentic loop."""
@@ -179,7 +191,7 @@ class ChatEngine:
             self._emit("thinking_end", {})
 
             if not response:
-                error_msg = "⚠️ No response from AI model. Make sure Ollama is running (`ollama serve`) and has a model pulled (`ollama pull qwen2.5-coder:3b`)."
+                error_msg = "⚠️ No response from AI model. Ensure AirLLM is installed (`pip install airllm transformers torch`)."
                 self._emit("assistant_message", {"content": error_msg})
                 return error_msg
 
@@ -232,42 +244,11 @@ class ChatEngine:
         return full_response
 
     def _generate(self, messages: List[Dict]) -> str:
-        """Generate a response from AirLLM or Ollama."""
+        """Generate text using AirLLM disk-offloaded inference."""
         full_messages = [
             {"role": "system", "content": SYSTEM_PROMPT}
         ] + messages[-20:]
-
-        # HuggingFace model ids always contain '/' → use AirLLM
-        if "/" in self.model:
-            return self._airllm_generate(full_messages)
-        else:
-            return self._ollama_generate(full_messages)
-
-    def _ollama_generate(self, full_messages: List[Dict]) -> str:
-        """Generate via Ollama HTTP API."""
-        payload = {
-            "model": self.model,
-            "messages": full_messages,
-            "stream": False,
-            "options": {
-                "temperature": 0.3,
-                "num_predict": 4096,
-                "num_ctx": 8192,
-            }
-        }
-        try:
-            r = requests.post(
-                f"{self.ollama_host}/api/chat",
-                json=payload,
-                timeout=300
-            )
-            if r.status_code == 200:
-                return r.json().get("message", {}).get("content", "")
-            else:
-                return ""
-        except Exception as e:
-            self._emit("error", {"message": f"Model error: {e}"})
-            return ""
+        return self._airllm_generate(full_messages)
 
     def _airllm_generate(self, full_messages: List[Dict]) -> str:
         """Generate text using AirLLM disk-offloaded inference."""
@@ -283,11 +264,10 @@ class ChatEngine:
                 )
                 self._airllm_tokenizer = AutoTokenizer.from_pretrained(self.model)
                 self._emit("assistant_message", {"content": "✅ AirLLM model loaded.\n", "partial": True})
-            except ImportError:
-                self._emit("error", {"message": "AirLLM not installed. Run: pip install airllm transformers torch"})
-                return ""
             except Exception as e:
-                self._emit("error", {"message": f"AirLLM loading error: {e}"})
+                import traceback
+                error_details = traceback.format_exc()
+                self._emit("error", {"message": f"AirLLM loading error: {e}\n{error_details}"})
                 return ""
 
         # Build prompt using chat template if available
@@ -386,6 +366,35 @@ class ChatEngine:
                 if fm:
                     calls.append(self._build_tool_from_context(tool, response))
                     break
+
+        if calls:
+            return calls
+
+        # Method 5: Markdown file and command blocks fallback
+        # If the model outputs ```bash ... ``` or ```sh ... ```
+        bash_pattern = re.compile(r'```(?:bash|sh)\n(.*?)\n```', re.DOTALL | re.IGNORECASE)
+        for match in bash_pattern.finditer(response):
+            cmd = match.group(1).strip()
+            if cmd:
+                calls.append({"name": "run_command", "params": {"command": cmd}})
+
+        # If the model outputs a file codeblock (e.g. ```python ... ```) with a filename nearby
+        file_block_pattern = re.compile(r'(?:create|edit|write|update|file|path).*?`([^`]+\.[a-z]+)`.*?\n?```[a-z]*\n(.*?)\n```', re.IGNORECASE | re.DOTALL)
+        for match in file_block_pattern.finditer(response):
+            path = match.group(1).strip()
+            content = match.group(2)
+            calls.append({"name": "create_file", "params": {"path": path, "content": content}})
+            
+        if not calls:
+            # Fallback looking for `# path: filename.ext` inside a block
+            code_block_pattern = re.compile(r'```[a-z]*\n(.*?)\n```', re.DOTALL)
+            for match in code_block_pattern.finditer(response):
+                content = match.group(1)
+                first_line = content.split('\n')[0].strip()
+                path_match = re.search(r'(?:#|//|<!--)\s*(?:path|file|filename):\s*([/\w\.-]+)', first_line, re.IGNORECASE)
+                if path_match:
+                    path = path_match.group(1).strip()
+                    calls.append({"name": "create_file", "params": {"path": path, "content": content}})
 
         return calls
 
