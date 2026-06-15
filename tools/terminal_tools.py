@@ -128,9 +128,20 @@ class TerminalTools:
 
     def start_background(self, command: str, cwd: str = None) -> Dict:
         """Start a long-running background process (like a dev server)."""
+        if self._is_dangerous(command):
+            return {
+                "success": False,
+                "error": f"Potentially dangerous command blocked: {command}"
+            }
+
         work_dir = self.workspace
         if cwd:
             work_dir = (self.workspace / cwd).resolve()
+            if not str(work_dir).startswith(str(self.workspace)):
+                return {"success": False, "error": "Path traversal detected"}
+
+        if not work_dir.exists():
+            work_dir.mkdir(parents=True, exist_ok=True)
 
         env = os.environ.copy()
 
