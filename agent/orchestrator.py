@@ -590,6 +590,7 @@ Generate specific fixes as JSON array of {{file, original, replacement}} objects
     def run_build(self, prompt: str, project_name: str = None, seo: bool = True):
         """Run the full build pipeline with Claude Code-style animations."""
         console.print(f"[bold green]🛠️  Building: {prompt}[/bold green]")
+        console.print("[dim]roobie will understand, plan, generate files, run tests, and polish your project[/dim]")
         
         state = AgentState(
             user_request=prompt,
