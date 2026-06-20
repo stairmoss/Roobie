@@ -375,9 +375,13 @@ def handle_slash(cmd: str, engine) -> Optional[str]:
         table.add_row("/read [path]", "Read a file")
         table.add_row("/search [query]", "Search the web")
         table.add_row("/status", "Show system status")
+        table.add_row("/version", "Show the current version of Roobie")
         table.add_row("/workspace [path]", "Show or change workspace")
         table.add_row("/exit", "Exit Roobie")
         console.print(table)
+
+    elif command == "/version":
+        console.print("[bold cyan]Roobie Version:[/bold cyan] [green]0.1.0[/green]")
 
     elif command == "/clear":
         engine.clear_history()
@@ -534,6 +538,7 @@ def _show_status(engine):
     table.add_column("Component", style="white")
     table.add_column("Status")
 
+    table.add_row("Roobie Version", "[green]0.1.0[/green]")
     table.add_row("Workspace", f"[cyan]{engine.workspace_dir}[/cyan]")
     table.add_row("Model", f"[cyan]{engine.model}[/cyan]")
 
@@ -626,6 +631,12 @@ def search(
             console.print()
     else:
         console.print(f"  [red]{result.get('error', 'Search failed')}[/red]")
+
+
+@app.command()
+def version():
+    """🏷️ Show the current version of Roobie."""
+    console.print("[bold cyan]Roobie Version:[/bold cyan] [green]0.1.0[/green]")
 
 
 @app.callback(invoke_without_command=True)
