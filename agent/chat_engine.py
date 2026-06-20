@@ -264,10 +264,19 @@ class ChatEngine:
                 )
                 self._airllm_tokenizer = AutoTokenizer.from_pretrained(self.model)
                 self._emit("assistant_message", {"content": "✅ AirLLM model loaded.\n", "partial": True})
+            except ImportError as e:
+                msg = (
+                    f"⚠️ could not import required packages for local inference: {e}\n"
+                    f"to fix this, please run: pip install airllm transformers torch"
+                )
+                self._emit("error", {"message": msg})
+                return ""
             except Exception as e:
-                import traceback
-                error_details = traceback.format_exc()
-                self._emit("error", {"message": f"AirLLM loading error: {e}\n{error_details}"})
+                msg = (
+                    f"⚠️ failed to load the model: {e}\n"
+                    f"please check your internet connection, disk space, and ram capacity."
+                )
+                self._emit("error", {"message": msg})
                 return ""
 
         # Build prompt using chat template if available
