@@ -204,6 +204,9 @@ def chat(
     show_banner()
 
     # Resolve workspace
+    if workspace and not os.path.isdir(workspace):
+        console.print(f"[red]⚠️ the workspace directory '{workspace}' does not exist. please verify the path.[/red]")
+        raise typer.Exit(code=1)
     ws = workspace or os.getcwd()
     ws = os.path.abspath(ws)
     mdl = model or os.environ.get("ROOBIE_MODEL", "deepseek-ai/deepseek-coder-1.3b-instruct")
@@ -594,6 +597,9 @@ def run(
     model: Optional[str] = typer.Option(None, "--model", "-m", help="AirLLM model"),
 ):
     """🚀 Run a one-shot task (non-interactive). E.g.: roobie run 'Create a landing page'"""
+    if workspace and not os.path.isdir(workspace):
+        console.print(f"[red]⚠️ the workspace directory '{workspace}' does not exist. please verify the path.[/red]")
+        raise typer.Exit(code=1)
     ws = workspace or os.getcwd()
     ws = os.path.abspath(ws)
     mdl = model or os.environ.get("ROOBIE_MODEL", "deepseek-ai/deepseek-coder-6.7b-instruct")
