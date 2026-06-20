@@ -556,6 +556,26 @@ def _show_status(engine):
     except ImportError:
         pass
 
+    # Check Playwright package
+    try:
+        import playwright
+        playwright_status = "[green]✅ Installed[/green]"
+    except ImportError:
+        playwright_status = "[yellow]⚠️ Missing (run: pip install playwright)[/yellow]"
+    table.add_row("Playwright SDK", playwright_status)
+
+    # Check sqlite3
+    try:
+        import sqlite3
+        sqlite_status = "[green]✅ Available[/green]"
+    except ImportError:
+        sqlite_status = "[red]❌ Missing[/red]"
+    table.add_row("SQLite3 Database", sqlite_status)
+
+    # Check git command
+    git_status = "[green]✅ Available[/green]" if shutil.which("git") else "[yellow]⚠️ Missing[/yellow]"
+    table.add_row("Git CLI", git_status)
+
     table.add_row("Node.js",  "[green]✅[/green]" if shutil.which("node")    else "[red]❌[/red]")
     table.add_row("Python",   f"[green]✅ {sys.version.split()[0]}[/green]")
     table.add_row("Chat History", f"{len(engine.conversation)} messages")
