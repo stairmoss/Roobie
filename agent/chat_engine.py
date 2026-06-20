@@ -495,13 +495,15 @@ class ChatEngine:
             if path_match:
                 params["path"] = path_match.group(1)
         if tool_name == "run_command":
-            cmd_match = re.search(r'"([^"]*)"', response)
-            if cmd_match:
-                params["command"] = cmd_match.group(1)
+            matches = re.findall(r'"([^"]*)"', response)
+            if matches:
+                cmd = matches[1] if len(matches) > 1 and matches[0] in ("command", "cmd") else matches[0]
+                params["command"] = cmd
         if tool_name == "web_search":
-            q_match = re.search(r'"([^"]*)"', response)
-            if q_match:
-                params["query"] = q_match.group(1)
+            matches = re.findall(r'"([^"]*)"', response)
+            if matches:
+                query = matches[1] if len(matches) > 1 and matches[0] == "query" else matches[0]
+                params["query"] = query
         return {"name": tool_name, "params": params}
 
     def _try_parse_tool_json(self, text: str) -> Optional[Dict]:

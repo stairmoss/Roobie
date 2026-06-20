@@ -80,3 +80,19 @@ final content"""
     assert "final content" in cleaned
     assert "tool_call" not in cleaned
     assert "run_command" not in cleaned
+
+def test_extract_tool_calls_fuzzy():
+    engine = ChatEngine("/tmp/roobie_test", model="mock-model")
+    response = '{"name": "run_command", "params": {"command": "echo hello"}}'
+    calls = engine._extract_tool_calls(response)
+    assert len(calls) == 1
+    assert calls[0]["name"] == "run_command"
+    assert calls[0]["params"]["command"] == "echo hello"
+
+def test_extract_tool_calls_natural_intent():
+    engine = ChatEngine("/tmp/roobie_test", model="mock-model")
+    response = 'I will run the command run_command("command"="npm run test") now.'
+    calls = engine._extract_tool_calls(response)
+    assert len(calls) == 1
+    assert calls[0]["name"] == "run_command"
+    assert calls[0]["params"]["command"] == "npm run test"
