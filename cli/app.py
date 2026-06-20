@@ -340,9 +340,16 @@ def chat(
 
 
 def _clean_tool_blocks(text: str) -> str:
-    """Remove <tool_call> blocks from display text."""
+    """Remove tool call blocks and patterns from display text to make it user friendly."""
     import re
-    return re.sub(r'<tool_call>.*?</tool_call>', '', text, flags=re.DOTALL).strip()
+    # Remove explicit tool calls
+    text = re.sub(r'<tool_call>.*?</tool_call>', '', text, flags=re.DOTALL)
+    # Remove json code blocks containing name
+    text = re.sub(r'```(?:json)?\s*\{[^`]*?"name"\s*:\s*"[^`]*?\}\s*```', '', text, flags=re.DOTALL)
+    # Remove bare json objects matching tool names
+    tool_names = "think|create_file|edit_file|read_file|delete_file|list_directory|create_folder|run_command|web_search"
+    text = re.sub(r'\{\s*"name"\s*:\s*"(?:' + tool_names + r')".*?\}\s*\}', '', text, flags=re.DOTALL)
+    return text.strip()
 
 
 def handle_slash(cmd: str, engine) -> Optional[str]:
