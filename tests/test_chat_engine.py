@@ -59,3 +59,24 @@ And step 2: execute it."""
     assert "Step 1: Planning" in text
     assert "And step 2: execute it." in text
     assert "tool_call" not in text
+
+def test_clean_tool_blocks():
+    from cli.app import _clean_tool_blocks
+    response = """some user content
+<tool_call>
+{"name": "think", "params": {"thought": "testing"}}
+</tool_call>
+more user content
+```json
+{
+  "name": "run_command",
+  "params": {"command": "echo"}
+}
+```
+final content"""
+    cleaned = _clean_tool_blocks(response)
+    assert "some user content" in cleaned
+    assert "more user content" in cleaned
+    assert "final content" in cleaned
+    assert "tool_call" not in cleaned
+    assert "run_command" not in cleaned
