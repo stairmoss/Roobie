@@ -550,6 +550,18 @@ def _show_status(engine):
 
     table.add_row("Roobie Version", "[green]0.1.0[/green]")
     table.add_row("Workspace", f"[cyan]{engine.workspace_dir}[/cyan]")
+
+    # Count files in workspace
+    try:
+        total_files = 0
+        if os.path.exists(engine.workspace_dir) and os.path.isdir(engine.workspace_dir):
+            for root, dirs, files in os.walk(engine.workspace_dir):
+                dirs[:] = [d for d in dirs if d not in (".git", ".venv", "venv", "node_modules", "__pycache__", ".next")]
+                total_files += len(files)
+        table.add_row("Workspace Files", f"[cyan]{total_files}[/cyan]")
+    except Exception:
+        pass
+
     table.add_row("Model", f"[cyan]{engine.model}[/cyan]")
 
     # AI backend status
