@@ -204,9 +204,13 @@ def chat(
     show_banner()
 
     # Resolve workspace
-    if workspace and not os.path.isdir(workspace):
-        console.print(f"[red]⚠️ the workspace directory '{workspace}' does not exist. please verify the path.[/red]")
-        raise typer.Exit(code=1)
+    if workspace:
+        if os.path.isfile(workspace):
+            console.print(f"[red]⚠️ '{workspace}' is a file, not a directory. please specify a directory path.[/red]")
+            raise typer.Exit(code=1)
+        elif not os.path.isdir(workspace):
+            console.print(f"[red]⚠️ the workspace directory '{workspace}' does not exist. please verify the path.[/red]")
+            raise typer.Exit(code=1)
     ws = workspace or os.getcwd()
     ws = os.path.abspath(ws)
     mdl = model or os.environ.get("ROOBIE_MODEL", "deepseek-ai/deepseek-coder-1.3b-instruct")
@@ -483,11 +487,14 @@ def handle_slash(cmd: str, engine) -> Optional[str]:
     elif command == "/workspace":
         if arg:
             new_ws = os.path.abspath(arg)
-            os.makedirs(new_ws, exist_ok=True)
-            engine.workspace_dir = new_ws
-            engine.executor.file_tools.workspace = __import__("pathlib").Path(new_ws).resolve()
-            engine.executor.terminal_tools.workspace = __import__("pathlib").Path(new_ws).resolve()
-            console.print(f"  [green]✓ Workspace changed to: {new_ws}[/green]")
+            if os.path.isfile(new_ws):
+                console.print(f"  [red]⚠️ '{arg}' is a file. Please specify a directory path for the workspace.[/red]")
+            else:
+                os.makedirs(new_ws, exist_ok=True)
+                engine.workspace_dir = new_ws
+                engine.executor.file_tools.workspace = __import__("pathlib").Path(new_ws).resolve()
+                engine.executor.terminal_tools.workspace = __import__("pathlib").Path(new_ws).resolve()
+                console.print(f"  [green]✓ Workspace changed to: {new_ws}[/green]")
         else:
             console.print(f"  Workspace: [cyan]{engine.workspace_dir}[/cyan]")
 
@@ -597,9 +604,13 @@ def run(
     model: Optional[str] = typer.Option(None, "--model", "-m", help="AirLLM model"),
 ):
     """🚀 Run a one-shot task (non-interactive). E.g.: roobie run 'Create a landing page'"""
-    if workspace and not os.path.isdir(workspace):
-        console.print(f"[red]⚠️ the workspace directory '{workspace}' does not exist. please verify the path.[/red]")
-        raise typer.Exit(code=1)
+    if workspace:
+        if os.path.isfile(workspace):
+            console.print(f"[red]⚠️ '{workspace}' is a file, not a directory. please specify a directory path.[/red]")
+            raise typer.Exit(code=1)
+        elif not os.path.isdir(workspace):
+            console.print(f"[red]⚠️ the workspace directory '{workspace}' does not exist. please verify the path.[/red]")
+            raise typer.Exit(code=1)
     ws = workspace or os.getcwd()
     ws = os.path.abspath(ws)
     mdl = model or os.environ.get("ROOBIE_MODEL", "deepseek-ai/deepseek-coder-6.7b-instruct")
