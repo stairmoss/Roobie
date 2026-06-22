@@ -133,11 +133,18 @@ def init_db():
 '''
 
     def _gen_route(self, name: str, project_type: str) -> str:
+        singular_name = name[:-1] if name.endswith("s") else name
+        class_name = singular_name.title().replace("_", "")
         return f'''"""Routes for {name}."""
 from fastapi import APIRouter, Depends, HTTPException
+from pydantic import BaseModel
 from database import get_db
 
 router = APIRouter(prefix="/{name}", tags=["{name}"])
+
+class {class_name}Create(BaseModel):
+    name: str
+    description: str | None = None
 
 @router.get("/")
 async def list_{name}(db=Depends(get_db)):
@@ -153,9 +160,8 @@ async def get_{name}({name}_id: int, db=Depends(get_db)):
     return dict(row)
 
 @router.post("/")
-async def create_{name}(data: dict, db=Depends(get_db)):
-    # TODO: Add proper Pydantic model validation
-    return {{"message": "Created", "data": data}}
+async def create_{name}(data: {class_name}Create, db=Depends(get_db)):
+    return {{"message": "Created", "data": data.model_dump()}}
 '''
 
     def _gen_models_base(self) -> str:
