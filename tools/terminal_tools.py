@@ -14,7 +14,10 @@ from typing import Dict, Optional, Callable
 # Commands that are dangerous and need extra caution
 DANGEROUS_PATTERNS = [
     "rm -rf /", "rm -rf ~", "mkfs", "dd if=", ":(){", "chmod -R 777 /",
-    "wget.*|.*sh", "curl.*|.*sh", "> /dev/sda",
+    "wget.*|.*sh", "curl.*|.*sh", "> /dev/sda", "> /dev/sdb", "> /dev/sdc",
+    "sudo rm", ":(){ :|:& };:", "shutdown", "reboot",
+    "rm -rf /usr", "rm -rf /var", "rm -rf /etc", "rm -rf /bin", "rm -rf /lib", "rm -rf /boot",
+    "mv /usr", "mv /bin", "mv /lib", "mv /etc"
 ]
 
 
