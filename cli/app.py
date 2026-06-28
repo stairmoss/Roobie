@@ -633,6 +633,10 @@ def _show_status(engine):
     git_status = "[green]✅ Available[/green]" if shutil.which("git") else "[yellow]⚠️ Missing[/yellow]"
     table.add_row("Git CLI", git_status)
 
+    # Check docker command
+    docker_status = "[green]✅ Available[/green]" if shutil.which("docker") else "[yellow]⚠️ Not Available (Optional)[/yellow]"
+    table.add_row("Docker CLI", docker_status)
+
     table.add_row("Node.js",  "[green]✅[/green]" if shutil.which("node")    else "[red]❌[/red]")
     table.add_row("Python",   f"[green]✅ {sys.version.split()[0]}[/green]")
     table.add_row("Chat History", f"{len(engine.conversation)} messages")
