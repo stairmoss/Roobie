@@ -557,6 +557,12 @@ def _show_status(engine):
     table.add_row("Roobie Version", "[green]0.1.0[/green]")
     table.add_row("Workspace", f"[cyan]{engine.workspace_dir}[/cyan]")
 
+    # Check environment variable overrides
+    env_model = os.environ.get("ROOBIE_MODEL")
+    table.add_row("Env Overridden Model", f"[cyan]{env_model}[/cyan]" if env_model else "[dim]Not Set[/dim]")
+    env_ws = os.environ.get("ROOBIE_WORKSPACE")
+    table.add_row("Env Overridden Workspace", f"[cyan]{env_ws}[/cyan]" if env_ws else "[dim]Not Set[/dim]")
+
     # Count files in workspace
     try:
         total_files = 0
