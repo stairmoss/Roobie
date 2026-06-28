@@ -372,19 +372,25 @@ def handle_slash(cmd: str, engine) -> Optional[str]:
     elif command == "/help":
         table = Table(title="Roobie Commands", show_header=True, header_style="bold cyan")
         table.add_column("Command", style="green")
+        table.add_column("Category", style="yellow")
         table.add_column("Description")
-        table.add_row("/help", "Show this help")
-        table.add_row("/clear", "Clear conversation history")
-        table.add_row("/tree", "Show workspace file tree")
-        table.add_row("/model [name]", "Show or change current model")
-        table.add_row("/models", "List available Ollama models")
-        table.add_row("/run [command]", "Run a shell command directly")
-        table.add_row("/read [path]", "Read a file")
-        table.add_row("/search [query]", "Search the web")
-        table.add_row("/status", "Show system status")
-        table.add_row("/version", "Show the current version of Roobie")
-        table.add_row("/workspace [path]", "Show or change workspace")
-        table.add_row("/exit", "Exit Roobie")
+        
+        table.add_row("/help", "General", "Show this help menu")
+        table.add_row("/version", "General", "Show the current version of Roobie")
+        table.add_row("/exit", "General", "Exit Roobie")
+        
+        table.add_row("/clear", "Chat & Files", "Clear conversation history")
+        table.add_row("/tree", "Chat & Files", "Show workspace file tree")
+        table.add_row("/read [path]", "Chat & Files", "Read a file from workspace")
+        
+        table.add_row("/run [command]", "Action", "Run a shell command directly")
+        table.add_row("/search [query]", "Action", "Search the web")
+        
+        table.add_row("/status", "System", "Show system status")
+        table.add_row("/workspace [path]", "System", "Show or change workspace")
+        table.add_row("/model [name]", "System", "Show or change current model")
+        table.add_row("/models", "System", "List available Ollama models")
+        
         console.print(table)
 
     elif command == "/version":
