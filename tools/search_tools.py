@@ -21,6 +21,14 @@ class SearchTools:
 
     def web_search(self, query: str, max_results: int = 8) -> Dict:
         """Search the web using DuckDuckGo HTML (no API)."""
+        query = query.strip()
+        if not query:
+            return {
+                "success": False,
+                "query": query,
+                "results": [],
+                "error": "Search query cannot be empty"
+            }
         results = []
 
         # Method 1: DuckDuckGo HTML
