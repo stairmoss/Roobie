@@ -387,6 +387,7 @@ def handle_slash(cmd: str, engine) -> Optional[str]:
         table.add_row("/search [query]", "Action", "Search the web")
         
         table.add_row("/status", "System", "Show system status")
+        table.add_row("/env", "System", "Show environment configuration settings")
         table.add_row("/workspace [path]", "System", "Show or change workspace")
         table.add_row("/model [name]", "System", "Show or change current model")
         table.add_row("/models", "System", "List available Ollama models")
@@ -395,6 +396,25 @@ def handle_slash(cmd: str, engine) -> Optional[str]:
 
     elif command == "/version":
         console.print("[bold cyan]Roobie Version:[/bold cyan] [green]0.1.0[/green]")
+
+    elif command == "/env":
+        from config.settings import get_settings
+        settings = get_settings()
+        table = Table(title="Roobie Settings & Configuration", show_header=True, header_style="bold cyan")
+        table.add_column("Key", style="green")
+        table.add_column("Value", style="cyan")
+        
+        table.add_row("Ollama Host", str(getattr(settings.models, "ollama_host", "N/A")))
+        table.add_row("Coding Model", str(getattr(settings.models, "coding_model", "N/A")))
+        table.add_row("Reasoning Model", str(getattr(settings.models, "reasoning_model", "N/A")))
+        table.add_row("Vision Model", str(getattr(settings.models, "vision_model", "N/A")))
+        table.add_row("Context Length", str(getattr(settings.models, "context_length", "N/A")))
+        table.add_row("Max Output Tokens", str(getattr(settings.models, "max_tokens", "N/A")))
+        table.add_row("Temperature", str(getattr(settings.models, "temperature", "N/A")))
+        table.add_row("AirLLM Enabled", str(getattr(settings.models, "use_airllm", "N/A")))
+        table.add_row("Projects Directory", str(getattr(settings.sandbox, "projects_dir", "N/A")))
+        
+        console.print(table)
 
     elif command == "/clear":
         engine.clear_history()
