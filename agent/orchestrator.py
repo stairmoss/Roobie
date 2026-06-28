@@ -769,7 +769,12 @@ Generate specific fixes as JSON array of {{file, original, replacement}} objects
             # Fallback
             history = self.memory.get_conversation(None, limit=10)
             for msg in history[-5:]:  # Show last 5
-                console.print(f"[bold {msg['role']}]{msg['role']}:[/bold {msg['role']}] {msg['content'][:100]}...")
+                role = msg.get('role', 'system')
+                color = "green" if role == "user" else "cyan" if role == "assistant" else "yellow"
+                content_preview = msg.get('content', '')[:100]
+                if len(msg.get('content', '')) > 100:
+                    content_preview += "..."
+                console.print(f"[bold {color}]{role.title()}:[/bold {color}] {content_preview}")
     
     def clear_chat_history(self):
         """Clear chat history."""
@@ -797,10 +802,16 @@ Type 'exit' to quit.
         try:
             import subprocess
             result = subprocess.run(cmd, shell=True, capture_output=True, text=True, timeout=30)
-            if result.stdout:
-                console.print(Panel(result.stdout, title="Output", border_style="green"))
-            if result.stderr:
-                console.print(Panel(result.stderr, title="Error", border_style="red"))
-            console.print(f"[yellow]Exit code: {result.returncode}[/yellow]")
+            if result.stdout.strip():
+                console.print(Panel(result.stdout.strip(), title="Output", border_style="green"))
+            if result.stderr.strip():
+                console.print(Panel(result.stderr.strip(), title="Error", border_style="red"))
+            if not result.stdout.strip() and not result.stderr.strip():
+                if result.returncode == 0:
+                    console.print("  [green]✓ Command executed successfully (no output)[/green]")
+                else:
+                    console.print(f"  [red]✗ Command failed with exit code: {result.returncode}[/red]")
+            else:
+                console.print(f"[yellow]Exit code: {result.returncode}[/yellow]")
         except Exception as e:
             console.print(f"[red]Command failed: {e}[/red]")
