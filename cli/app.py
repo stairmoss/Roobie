@@ -560,13 +560,13 @@ def _show_status(engine):
     # Count files in workspace
     try:
         total_files = 0
-        if os.path.exists(engine.workspace_dir) and os.path.isdir(engine.workspace_dir):
+        if engine.workspace_dir and os.path.exists(engine.workspace_dir) and os.path.isdir(engine.workspace_dir):
             for root, dirs, files in os.walk(engine.workspace_dir):
                 dirs[:] = [d for d in dirs if d not in (".git", ".venv", "venv", "node_modules", "__pycache__", ".next")]
                 total_files += len(files)
         table.add_row("Workspace Files", f"[cyan]{total_files}[/cyan]")
     except Exception:
-        pass
+        table.add_row("Workspace Files", "[yellow]Unavailable[/yellow]")
 
     table.add_row("Model", f"[cyan]{engine.model}[/cyan]")
 
