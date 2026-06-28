@@ -398,7 +398,7 @@ def handle_slash(cmd: str, engine) -> Optional[str]:
         console.print(table)
 
     elif command == "/version":
-        console.print("[bold cyan]Roobie Version:[/bold cyan] [green]0.1.0[/green]")
+        console.print("[bold cyan]Roobie Version:[/bold cyan] [green]1.0.0[/green]")
 
     elif command == "/env":
         from config.settings import get_settings
@@ -577,7 +577,7 @@ def _show_status(engine):
     table.add_column("Component", style="white")
     table.add_column("Status")
 
-    table.add_row("Roobie Version", "[green]0.1.0[/green]")
+    table.add_row("Roobie Version", "[green]1.0.0[/green]")
     table.add_row("Workspace", f"[cyan]{engine.workspace_dir}[/cyan]")
 
     # Check environment variable overrides
@@ -724,7 +724,7 @@ def search(
 @app.command()
 def version():
     """🏷️ Show the current version of Roobie."""
-    console.print("[bold cyan]Roobie Version:[/bold cyan] [green]0.1.0[/green]")
+    console.print("[bold cyan]Roobie Version:[/bold cyan] [green]1.0.0[/green]")
 
 
 @app.callback(invoke_without_command=True)
