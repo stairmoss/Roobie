@@ -75,3 +75,9 @@ def test_get_tree(temp_workspace):
     res = ft.get_tree(".", max_depth=2)
     assert res["success"] is True
     assert len(res["tree"]) > 0
+
+def test_path_traversal(temp_workspace):
+    ft = FileTools(temp_workspace)
+    with pytest.raises(ValueError, match="Path traversal detected"):
+        ft._resolve("../outside.txt")
+
