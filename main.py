@@ -20,5 +20,9 @@ os.makedirs(os.path.expanduser("~/.roobie"), exist_ok=True)
 
 from cli.app import app
 
-if __name__ == "__main__":
+def main():
     app()
+
+if __name__ == "__main__":
+    main()
+
