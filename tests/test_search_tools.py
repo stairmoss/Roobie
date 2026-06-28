@@ -50,3 +50,16 @@ def test_fetch_url(mock_get):
     assert "This is a test paragraph." in res["content"]
     assert "alert" not in res["content"]  # scripts should be stripped
     assert "body {" not in res["content"]  # style should be stripped
+
+def test_web_search_validation():
+    st = SearchTools()
+    
+    # Test empty query
+    res = st.web_search("   ")
+    assert res["success"] is False
+    assert "cannot be empty" in res["error"]
+    
+    # Test empty query empty string
+    res = st.web_search("")
+    assert res["success"] is False
+    assert "cannot be empty" in res["error"]
