@@ -13,6 +13,10 @@ Usage:
 import sys
 import os
 
+if sys.version_info < (3, 9):
+    print("⚠️ Warning: Roobie requires Python 3.9 or higher. You are running Python " + 
+          sys.version.split()[0] + ". Some features may not work correctly.", file=sys.stderr)
+
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 # Ensure ~/.roobie directory exists
