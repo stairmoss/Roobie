@@ -167,13 +167,25 @@ class ModelManager:
         try:
             r = requests.post(f"{self.ollama_host}/api/pull",
                             json={"name": model_name}, stream=True, timeout=600)
+            if r.status_code != 200:
+                console.print(f"[red]❌ Ollama server returned error code {r.status_code}. Please check internet connection and model name.[/red]")
+                return False
             for line in r.iter_lines():
                 if line:
-                    data = json.loads(line)
-                    if "status" in data:
-                        console.print(f"  {data['status']}", end="\r")
+                    try:
+                        data = json.loads(line)
+                        if "status" in data:
+                            console.print(f"  {data['status']}", end="\r")
+                        elif "error" in data:
+                            console.print(f"\n[red]❌ Download error: {data['error']}[/red]")
+                            return False
+                    except json.JSONDecodeError:
+                        pass
             console.print(f"\n[green]✅ {model_name} pulled successfully[/green]")
             return True
+        except requests.exceptions.ConnectionError:
+            console.print(f"[red]❌ Connection to Ollama failed. Please start the Ollama service on your computer.[/red]")
+            return False
         except Exception as e:
             console.print(f"[red]❌ Failed to pull {model_name}: {e}[/red]")
             return False
