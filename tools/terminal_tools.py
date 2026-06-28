@@ -200,3 +200,8 @@ class TerminalTools:
             status = "running" if proc.poll() is None else f"exited ({proc.returncode})"
             procs.append({"pid": pid, "system_pid": proc.pid, "status": status})
         return {"success": True, "processes": procs}
+
+    def cleanup(self):
+        """Clean up all running background processes."""
+        for pid in list(self._processes.keys()):
+            self.stop_background(pid)

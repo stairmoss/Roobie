@@ -223,6 +223,9 @@ def chat(
 
     engine = ChatEngine(ws, mdl)
 
+    import atexit
+    atexit.register(engine.executor.terminal_tools.cleanup)
+
     console.print(f"  ✅ AirLLM ready (will load on first message)\n")
 
     console.print(Rule("Chat", style="cyan"))
