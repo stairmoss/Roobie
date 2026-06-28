@@ -94,6 +94,7 @@ AirLLM splits them into chunks and streams from disk — **no full RAM loading**
 | `/read <path>` | Read a file |
 | `/search <query>` | Web search |
 | `/status` | System status |
+| `/env` | Show active environment settings |
 | `/workspace <path>` | Change workspace |
 | `/exit` | Quit |
 
@@ -184,6 +185,18 @@ roobie/
 | CPU | Any x86_64 | Modern multi-core |
 | Storage | 2GB free | 5GB free |
 | GPU | Not required | Optional (CUDA) |
+
+## Testing
+
+To run the unit test suite, make sure dev dependencies are installed, then run `pytest`:
+
+```bash
+# Run all tests
+PYTHONPATH=. pytest
+
+# Run settings tests specifically
+PYTHONPATH=. pytest tests/test_settings.py
+```
 
 ---
 
